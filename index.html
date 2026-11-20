@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minigames</title>
+  <meta name="description" content="Many small games in one site.">
+  <link rel="stylesheet" href="https://rigatoni534.github.io/style.css">
+  <style>
+    .features {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .game-type {
+      margin: 0 0 10px;
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
+
+    .feature h3 {
+      overflow-wrap: anywhere;
+    }
+
+    .feature p {
+      overflow-wrap: anywhere;
+    }
+
+    .feature .empty {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .notice {
+      margin: 20px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    code {
+      padding: 2px 5px;
+      border: 1px solid var(--border);
+      background-color: var(--surface-raised);
+      font-family: ui-monospace, Consolas, monospace;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <nav class="site-nav">
+      <a class="nav-brand" href="./">rigatoni534</a>
+      <div class="nav-links">
+        <a href="https://github.com/rigatoni534/minigames" target="_blank" rel="noopener">Source <span aria-hidden="true">&rarr;</span></a>
+      </div>
+    </nav>
+    <p class="name">MINIGAMES</p>
+    <h1>Play<span class="period">.</span></h1>
+    <p class="header-copy">
+      Small games, one site. Every folder inside <code>games/</code> with a
+      <code>meta.json</code> shows up here automatically.
+    </p>
+  </header>
+
+  <main>
+    <section class="section" aria-labelledby="games-heading">
+      <h2 class="section-title" id="games-heading">Games</h2>
+      <ul class="features" id="game-list" aria-busy="true">
+        <li class="feature"><p class="empty">Loading games&hellip;</p></li>
+      </ul>
+      <p class="notice" id="game-status" hidden></p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>MINIGAMES</span>
+    <span id="game-count"></span>
+  </footer>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const OWNER = "rigatoni534";
+      const REPO = "minigames";
+      const BRANCH = "main";
+      const GAMES_DIR = "games";
+
+      const listEl = document.getElementById("game-list");
+      const statusEl = document.getElementById("game-status");
+      const countEl = document.getElementById("game-count");
+
+      const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (ch) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[ch]));
+
+      // Reads a meta.json value whatever the key casing is ("Name", "name", ...).
+      function readMeta(meta, key) {
+        const wanted = key.toLowerCase();
+        for (const name of Object.keys(meta || {})) {
+          if (name.toLowerCase() === wanted) {
+            const value = meta[name];
+            if (typeof value === "string" && value.trim()) return value.trim();
+            if (Array.isArray(value)) return value.join(", ");
+          }
+        }
+        return "";
+      }
+
+      async function getJson(url) {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${url} -> ${res.status}`);
+        return res.json();
+      }
+
+      // Ask GitHub for the folders inside games/. This is what keeps the page
+      // in sync with the repository: add a folder and it appears here.
+      async function foldersFromGitHub() {
+        const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${GAMES_DIR}?ref=${BRANCH}`;
+        const res = await fetch(url, {
+          cache: "no-store",
+          headers: { Accept: "application/vnd.github+json" }
+        });
+        if (!res.ok) return null;
+        const entries = await res.json();
+        if (!Array.isArray(entries)) return null;
+        return entries.filter((entry) => entry.type === "dir").map((entry) => entry.name);
+      }
+
+      // Local fallback so the page still works when the API is rate limited,
+      // offline, or the games/ folder is not pushed yet.
+      async function foldersFromManifest() {
+        const data = await getJson(`${GAMES_DIR}/manifest.json`);
+        const folders = Array.isArray(data) ? data : data.games;
+        return Array.isArray(folders) ? folders.filter((name) => typeof name === "string") : [];
+      }
+
+      async function loadGame(folder) {
+        const path = `${GAMES_DIR}/${encodeURIComponent(folder)}/`;
+        let meta = {};
+        try {
+          meta = await getJson(`${path}meta.json`);
+        } catch (error) {
+          console.warn(`No meta.json for "${folder}"`, error);
+        }
+
+        return {
+          name: readMeta(meta, "name") || folder,
+          type: readMeta(meta, "type") || "HTML",
+          description: readMeta(meta, "description") || "No description yet.",
+          path
+        };
+      }
+
+      function render(games) {
+        if (!games.length) {
+          listEl.innerHTML =
+            '<li class="feature"><p class="empty">No games found in <code>games/</code> yet.</p></li>';
+        } else {
+          listEl.innerHTML = games.map((game) => `
+            <li class="feature">
+              <p class="game-type">${escapeHtml(game.type)}</p>
+              <h3>${escapeHtml(game.name)}</h3>
+              <p>${escapeHtml(game.description)}</p>
+              <a href="${escapeHtml(game.path)}">Play <span aria-hidden="true">&rarr;</span></a>
+            </li>`).join("");
+        }
+
+        listEl.setAttribute("aria-busy", "false");
+        countEl.textContent = `${games.length} game${games.length === 1 ? "" : "s"}`;
+      }
+
+      function setStatus(message) {
+        statusEl.textContent = message;
+        statusEl.hidden = !message;
+      }
+
+      async function init() {
+        let folders = null;
+        let source = "github";
+
+        try {
+          folders = await foldersFromGitHub();
+        } catch (error) {
+          console.warn("GitHub listing failed", error);
+        }
+
+        if (!folders) {
+          source = "manifest";
+          try {
+            folders = await foldersFromManifest();
+          } catch (error) {
+            console.error("Game manifest failed", error);
+            folders = [];
+            render([]);
+            setStatus("Could not reach the repository listing. Check your connection and reload.");
+            return;
+          }
+        }
+
+        const games = await Promise.all(folders.map(loadGame));
+        games.sort((a, b) => a.name.localeCompare(b.name));
+        render(games);
+
+        if (source === "manifest") {
+          setStatus("GitHub's live folder listing was unavailable, so this list came from games/manifest.json.");
+        }
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
