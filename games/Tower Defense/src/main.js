@@ -1,4 +1,3 @@
-import './style.css';
 import { Game } from './game.js';
 import { UI } from './ui.js';
 import { MapPreview } from './render/preview.js';
