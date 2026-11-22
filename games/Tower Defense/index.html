@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Last Stand — Tower Defence</title>
+  </head>
+  <body>
+    <div id="app" data-mode="menu">
+      <canvas id="preview-canvas" aria-hidden="true"></canvas>
+
+      <div class="stage">
+        <canvas id="scene"></canvas>
+        <div class="vignette" aria-hidden="true"></div>
+      </div>
+
+      <header id="topbar">
+        <div class="brand">
+          <div class="logo">LAST<span>STAND</span></div>
+          <div class="mapline"><b id="mapName">City</b><i>/</i><span id="modeName">Standard</span></div>
+        </div>
+
+        <div class="wavebox">
+          <div class="wavelabel">WAVE</div>
+          <div class="waveval"><b id="waveNum">0</b><span id="waveMax">/ 40</span></div>
+          <div class="wavebar"><i id="waveFill"></i></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat cash"><span class="k">CASH</span><b id="cash">0</b></div>
+          <div class="stat lives"><span class="k">LIVES</span><b id="lives">20</b></div>
+          <div class="stat towers"><span class="k">TOWERS</span><span class="tval"><b id="towerCount">0</b><span class="of">/30</span></span></div>
+        </div>
+
+        <div class="controls">
+          <button id="btnPause" class="ico" title="Pause">❚❚</button>
+          <button id="btnSpeed" class="ico" title="Speed">1×</button>
+          <button id="btnNext" class="action">NEXT WAVE</button>
+          <button id="btnQuit" class="ico quit" title="Quit to menu">✕</button>
+        </div>
+      </header>
+
+      <div id="hint" class="hint"></div>
+
+      <aside id="panel" class="panel">
+        <div class="p-head">
+          <div class="p-icon"><img id="pIcon" alt="" /></div>
+          <div class="p-title">
+            <h3 id="pName">Tower</h3>
+            <div class="p-sub"><span id="pTier">TIER</span><span id="pLevel">LV 1</span></div>
+          </div>
+          <button id="pClose" class="p-close" title="Close">✕</button>
+        </div>
+        <p id="pDesc" class="p-desc"></p>
+        <div class="p-stats">
+          <div><span>DAMAGE</span><b id="pDmg">0</b></div>
+          <div><span>RANGE</span><b id="pRange">0</b></div>
+          <div><span>RATE</span><b id="pRate">0</b></div>
+          <div><span>DPS</span><b id="pDps">0</b></div>
+        </div>
+        <div class="p-actions">
+          <button id="btnUpgrade" class="p-up">UPGRADE <em id="pCost">40</em></button>
+          <button id="btnSell" class="p-sell">SELL <em id="pSell">20</em></button>
+        </div>
+      </aside>
+
+      <footer id="dock">
+        <div class="dockhead">
+          <span class="dh-title">BUILD</span>
+          <span id="dockHint" class="dh-hint">Pick a tower, then click the map</span>
+        </div>
+        <div id="cards" class="cards"></div>
+      </footer>
+
+      <div id="menu" class="menu">
+        <div class="menucard">
+          <div class="mtag">TOWER DEFENCE</div>
+          <h1>LAST<br /><em>STAND</em></h1>
+          <p class="blurb">
+            Fourteen towers, three roads, and no time to nap. Keep the line, keep the lights on.
+          </p>
+
+          <div class="section">
+            <h2><span>01</span> CHOOSE A MAP</h2>
+            <div id="mapCards" class="pick"></div>
+          </div>
+
+          <div class="section">
+            <h2><span>02</span> CHOOSE A MODE</h2>
+            <div id="modeCards" class="pick"></div>
+          </div>
+
+          <button id="btnStart" class="start">DEPLOY <i>→</i></button>
+          <div class="mbuild">WASD / drag to pan · wheel to zoom · 1–9 build</div>
+        </div>
+        <div class="mdead" aria-hidden="true">LS</div>
+      </div>
+
+      <div id="end" class="end hidden">
+        <div class="endcard">
+          <div class="etag" id="endTag">VICTORY</div>
+          <h2 id="endTitle">The line held.</h2>
+          <p id="endBody">You survived all forty waves.</p>
+          <div class="endstats">
+            <div><span>WAVES</span><b id="endWaves">0</b></div>
+            <div><span>KILLS</span><b id="endKills">0</b></div>
+            <div><span>EARNED</span><b id="endEarned">0</b></div>
+            <div><span>BUILT</span><b id="endBuilt">0</b></div>
+          </div>
+          <div class="endrow">
+            <button id="btnRetry" class="start">RUN IT BACK</button>
+            <button id="btnEndMenu" class="start ghost">MENU</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
